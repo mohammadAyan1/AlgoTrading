@@ -363,3 +363,22 @@ exports.getContractMasterUrl = (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// GET /api/market/contract-master?exchange=NSE
+// Returns instruments from backend cache/service so browser never calls external domain directly.
+exports.getContractMaster = (req, res) => {
+  try {
+    const { exchange = 'NSE' } = req.query;
+    const exch = String(exchange).toUpperCase();
+    const data = scripMaster.getInstruments(exch);
+    res.json({
+      success: true,
+      exchange: exch,
+      count: data.length,
+      data
+    });
+  } catch (err) {
+    console.error('getContractMaster error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

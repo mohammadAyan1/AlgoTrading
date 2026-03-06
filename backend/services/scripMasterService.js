@@ -579,6 +579,18 @@ class ScripMasterService {
     }
   }
 
+  // Return all loaded instruments for one exchange (or all when exchange is null)
+  getInstruments(exchange = null) {
+    try {
+      if (!exchange) return this.instruments;
+      const exch = String(exchange).toUpperCase();
+      return this.instruments.filter((inst) => inst.exchange === exch || inst.exch === exch);
+    } catch (err) {
+      console.error('getInstruments error:', err);
+      return [];
+    }
+  }
+
   // Return the contract master base URL (for frontend to fetch directly)
   getContractMasterUrl(exchange) {
     try { // [TRY/CATCH ADDED]
@@ -610,7 +622,7 @@ try { // [TRY/CATCH ADDED]
     search: () => [],
     getStats: () => ({ total: 0, isLoaded: false }),
     getContractMasterUrl: () => '',
+    getInstruments: () => [],
   };
 }
 module.exports = scripMasterInstance;
-

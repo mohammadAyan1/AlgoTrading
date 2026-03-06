@@ -1,8 +1,7 @@
 /**
  * Contract Master Service — Browser-side
  * ─────────────────────────────────────────────────────────────
- * Downloads instrument data DIRECTLY from Alice Blue in the browser.
- * Browser can access v2api.aliceblueonline.com, server cannot.
+ * Downloads instrument data via backend API proxy (CORS-safe).
  *
  * token field = instrumentId (required for every Alice Blue order)
  *
@@ -14,7 +13,7 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-const BASE_URL   = 'https://v2api.aliceblueonline.com/restpy/static/contract_master/V2';
+const BASE_URL   = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api') + '/market/contract-master';
 const EXCHANGES  = ['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BFO', 'BCD'];
 const CACHE_KEY  = 'ab_contract_master_v2';
 const CACHE_TTL  = 6 * 60 * 60 * 1000; // 6 hours
@@ -88,17 +87,14 @@ function saveCache(records) {
 
 // ── Fetch one exchange ────────────────────────────────────────────────────
 async function fetchExchange(exch) {
-  const url = `${BASE_URL}/${exch}`;
+  const url = `${BASE_URL}?exchange=${exch}`;
   const res = await fetch(url, {
     headers: { 'Accept': 'application/json' },
     cache: 'default'
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-
-  // Response: { "NSE": [...] }  or  { "NFO": [...] }  etc.
-  const key  = Object.keys(data).find(k => k.toUpperCase() === exch) || Object.keys(data)[0];
-  const rows = data[key];
+  const payload = await res.json();
+  const rows = Array.isArray(payload?.data) ? payload.data : [];
   if (!Array.isArray(rows)) throw new Error('Invalid format');
   return rows.map(r => normalize(r, exch));
 }

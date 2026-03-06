@@ -61,5 +61,6 @@ router.get('/market/instruments-stats', marketController.getInstrumentsStats);
 router.post('/market/reload-instruments', marketController.reloadInstruments);
 // Proxy: frontend se contract master fetch karo (agar backend mein internet nahi)
 router.get('/market/contract-master-url', marketController.getContractMasterUrl);
+router.get('/market/contract-master', marketController.getContractMaster);
 
 module.exports = router;

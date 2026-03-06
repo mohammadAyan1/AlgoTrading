@@ -1,10 +1,10 @@
 /**
  * ContractMasterContext
  * 
- * Browser se directly Alice Blue contract master download karta hai.
- * Server ka internet nahi hone par bhi kaam karta hai kyunki browser ka internet hota hai.
+ * Contract master backend API se load hota hai.
+ * Browser direct Alice Blue domain hit nahi karta (CORS-safe).
  * 
- * Contract Master URL: https://v2api.aliceblueonline.com/restpy/static/contract_master/V2/{EXCHANGE}
+ * Contract Master URL (backend): http://localhost:5000/api/market/contract-master?exchange={EXCHANGE}
  * Exchanges: NSE, BSE, NFO, MCX, CDS, BCD, BFO
  * 
  * Search results mein hamesha REAL tokens honge.
@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
-const CONTRACT_BASE = 'https://v2api.aliceblueonline.com/restpy/static/contract_master/V2';
+const BACKEND_API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 const EXCHANGES = ['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BCD', 'BFO'];
 const LS_KEY = 'contract_master_cache_v1';
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
@@ -103,13 +103,12 @@ export function ContractMasterProvider({ children }) {
 
     await Promise.allSettled(EXCHANGES.map(async (exch) => {
       try {
-        const res = await fetch(`${CONTRACT_BASE}/${exch}`, { signal: AbortSignal.timeout(20000) });
+        const res = await fetch(`${BACKEND_API_BASE}/market/contract-master?exchange=${exch}`, { signal: AbortSignal.timeout(20000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        // Response: { "NSE": [...] }
-        const key = Object.keys(json)[0];
-        const list = json[key];
+        const list = Array.isArray(json?.data) ? json.data : [];
         if (Array.isArray(list) && list.length > 0) {
-          downloaded[exch] = list || "123456";
+          downloaded[exch] = list;
           anySuccess = true;
           console.log(`  ✅ ${exch}: ${list.length} instruments`);
         }
