@@ -1,0 +1,570 @@
+// const axios = require('axios');
+// const crypto = require('crypto');
+// require('dotenv').config();
+
+// const BASE_URL = process.env.ALICE_BASE_URL || 'https://a3.aliceblueonline.com';
+// const AUTH_URL = process.env.ALICE_AUTH_URL || 'https://ant.aliceblueonline.com';
+
+// class AliceBlueService {
+
+//   getLoginUrl(appCode) {
+//     return `${AUTH_URL}/?appcode=${appCode}`;
+//   }
+
+//   createChecksum(userId, authCode, apiSecret) {
+//     return crypto.createHash('sha256').update(userId + authCode + apiSecret).digest('hex');
+//   }
+
+//   async getUserSession(checksum) {
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/vendor/getUserDetails`,
+//       { checkSum: checksum },
+//       { headers: { 'Content-Type': 'application/json' } }
+//     );
+//     return res.data;
+//   }
+
+//   getHeaders(userSession) {
+//     return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userSession}` };
+//   }
+
+//   async getProfile(userSession) {
+//     const res = await axios.get(`${BASE_URL}/open-api/od/v1/profile/`, { headers: this.getHeaders(userSession) });
+//     return res.data;
+//   }
+
+//   async getLimits(userSession) {
+//     const res = await axios.get(`${BASE_URL}/open-api/od/v1/limits/`, { headers: this.getHeaders(userSession) });
+//     return res.data;
+//   }
+
+//   // ── Regular Orders ────────────────────────────────────────────────────────
+//   async placeOrder(userSession, orderData) {
+//     // NOTE: instrumentId MUST be resolved before calling this function
+//     const payload = {
+//       tradingSymbol: orderData.tradingSymbol,
+//       exchange: orderData.exchange,
+//       transactionType: orderData.transactionType,
+//       orderType: orderData.orderType || 'MARKET',
+//       product: orderData.product || 'INTRADAY',
+//       validity: orderData.validity || 'DAY',
+//       quantity: String(orderData.quantity),
+//       price: Number(orderData.price || 0),
+//       orderComplexity: orderData.orderComplexity || 'REGULAR',
+//       instrumentId: String(orderData.instrumentId),  // must be non-empty
+//     };
+
+//     console.log(payload, "this is the orders payload");
+
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/orders/placeorder`,
+//       [payload],
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   async modifyOrder(userSession, orderData) {
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/orders/modify`,
+//       orderData,
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   async cancelOrder(userSession, orderData) {
+//     // orderData: { orderNumber, exchangeOrderNumber (optional) }
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/orders/cancel`,
+//       orderData,
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   async getOrderBook(userSession) {
+//     const res = await axios.get(`${BASE_URL}/open-api/od/v1/orders/book`, { headers: this.getHeaders(userSession) });
+//     return res.data;
+//   }
+
+//   async getTrades(userSession) {
+//     const res = await axios.get(`${BASE_URL}/open-api/od/v1/orders/trades`, { headers: this.getHeaders(userSession) });
+//     return res.data;
+//   }
+
+//   // ── GTT Orders ────────────────────────────────────────────────────────────
+//   async placeGTTOrder(userSession, gttData) {
+//     // NOTE: instrumentId MUST be resolved before calling
+//     const payload = {
+//       tradingSymbol: gttData.tradingSymbol,
+//       exchange: gttData.exchange,
+//       transactionType: gttData.transactionType,
+//       orderType: gttData.orderType || 'LIMIT',
+//       product: gttData.product || 'LONGTERM',
+//       validity: gttData.validity || 'DAY',
+//       quantity: String(gttData.quantity),
+//       price: Number(gttData.price),
+//       orderComplexity: gttData.orderComplexity || 'REGULAR',
+//       instrumentId: String(gttData.instrumentId),  // must be non-empty
+//       gttType: gttData.gttType,        // LTP_B_O or LTP_A_O
+//       gttValue: String(gttData.gttValue),
+//     };
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/orders/gtt/execute`,
+//       payload,
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   async modifyGTTOrder(userSession, gttData) {
+//     console.log(gttData, "This is the gttData");
+
+//     const payloadData = { ...gttData, brokerOrderId: gttData?.orderNumber, instrumentId: "14366", gttType: "LTP_A_O" }
+
+//     console.log(payloadData, "This is the payload data ");
+
+
+//     // gttData must include orderNumber + updated fields
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/orders/gtt/modify`,
+//       payloadData,
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   async cancelGTTOrder(userSession, orderData) {
+//     // orderData: { orderNumber }
+//     const res = await axios.post(
+//       `${BASE_URL}/open-api/od/v1/orders/gtt/cancel`,
+//       orderData,
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   async getGTTOrderBook(userSession) {
+//     const res = await axios.get(
+//       `${BASE_URL}/open-api/od/v1/orders/gtt/orderbook`,
+//       { headers: this.getHeaders(userSession) }
+//     );
+//     return res.data;
+//   }
+
+//   // ── Portfolio ─────────────────────────────────────────────────────────────
+//   async getHoldings(userSession) {
+//     const res = await axios.get(`${BASE_URL}/open-api/od/v1/holdings/CNC`, { headers: this.getHeaders(userSession) });
+//     return res.data;
+//   }
+
+//   async getPositions(userSession) {
+//     const res = await axios.get(`${BASE_URL}/open-api/od/v1/positions/`, { headers: this.getHeaders(userSession) });
+//     return res.data;
+//   }
+// }
+
+// module.exports = new AliceBlueService();
+
+
+
+const axios = require('axios');
+const crypto = require('crypto');
+require('dotenv').config();
+
+const BASE_URL = process.env.ALICE_BASE_URL || 'https://a3.aliceblueonline.com';
+const AUTH_URL = process.env.ALICE_AUTH_URL || 'https://ant.aliceblueonline.com';
+
+class AliceBlueService {
+
+  getLoginUrl(appCode) {
+    try {
+      return `${AUTH_URL}/?appcode=${appCode}`;
+    } catch (error) {
+      console.error("Login URL error:", error.message);
+      throw error;
+    }
+  }
+
+  createChecksum(userId, authCode, apiSecret) {
+    try {
+      return crypto
+        .createHash('sha256')
+        .update(userId + authCode + apiSecret)
+        .digest('hex');
+    } catch (error) {
+      console.error("Checksum error:", error.message);
+      throw error;
+    }
+  }
+
+  getHeaders(userSession) {
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${userSession}`
+    };
+  }
+
+  async getUserSession(checksum) {
+    try {
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/vendor/getUserDetails`,
+        { checkSum: checksum },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getUserSession error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to get user session");
+
+    }
+  }
+
+  async getProfile(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/profile/`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getProfile error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch profile");
+
+    }
+  }
+
+  async getLimits(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/limits/`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getLimits error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch limits");
+
+    }
+  }
+
+  // ── Place Order ─────────────────────────────────────
+
+  async placeOrder(userSession, orderData) {
+
+    try {
+
+      const payload = {
+        tradingSymbol: orderData.tradingSymbol,
+        exchange: orderData.exchange,
+        transactionType: orderData.transactionType,
+        orderType: orderData.orderType || 'MARKET',
+        product: orderData.product || 'INTRADAY',
+        validity: orderData.validity || 'DAY',
+        quantity: String(orderData.quantity),
+        price: Number(orderData.price || 0),
+        orderComplexity: orderData.orderComplexity || 'REGULAR',
+        instrumentId: String(orderData.instrumentId)
+      };
+
+      console.log(payload, "Order payload");
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/orders/placeorder`,
+        [payload],
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "placeOrder error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to place order");
+
+    }
+  }
+
+  async modifyOrder(userSession, orderData) {
+    try {
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/orders/modify`,
+        orderData,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "modifyOrder error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to modify order");
+
+    }
+  }
+
+  async cancelOrder(userSession, orderData) {
+    try {
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/orders/cancel`,
+        orderData,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "cancelOrder error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to cancel order");
+
+    }
+  }
+
+  async getOrderBook(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/orders/book`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getOrderBook error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch order book");
+
+    }
+  }
+
+  async getTrades(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/orders/trades`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getTrades error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch trades");
+
+    }
+  }
+
+  // ── GTT Orders ─────────────────────────────────────
+
+  async placeGTTOrder(userSession, gttData) {
+    try {
+
+      const payload = {
+        tradingSymbol: gttData.tradingSymbol,
+        exchange: gttData.exchange,
+        transactionType: gttData.transactionType,
+        orderType: gttData.orderType || 'LIMIT',
+        product: gttData.product || 'LONGTERM',
+        validity: gttData.validity || 'DAY',
+        quantity: String(gttData.quantity),
+        price: Number(gttData.price),
+        orderComplexity: gttData.orderComplexity || 'REGULAR',
+        instrumentId: String(gttData.instrumentId),
+        gttType: gttData.gttType,
+        gttValue: String(gttData.gttValue)
+      };
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/orders/gtt/execute`,
+        payload,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "placeGTTOrder error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to place GTT order");
+
+    }
+  }
+
+  async modifyGTTOrder(userSession, gttData) {
+    try {
+
+      const payloadData = {
+        ...gttData,
+        brokerOrderId: gttData?.orderNumber,
+        instrumentId: "14366",
+        gttType: "LTP_A_O"
+      };
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/orders/gtt/modify`,
+        payloadData,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "modifyGTTOrder error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to modify GTT order");
+
+    }
+  }
+
+  async cancelGTTOrder(userSession, orderData) {
+    try {
+
+      const res = await axios.post(
+        `${BASE_URL}/open-api/od/v1/orders/gtt/cancel`,
+        orderData,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "cancelGTTOrder error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to cancel GTT order");
+
+    }
+  }
+
+  async getGTTOrderBook(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/orders/gtt/orderbook`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getGTTOrderBook error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch GTT orders");
+
+    }
+  }
+
+  // ── Portfolio ─────────────────────────────────────
+
+  async getHoldings(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/holdings/CNC`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getHoldings error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch holdings");
+
+    }
+  }
+
+  async getPositions(userSession) {
+    try {
+
+      const res = await axios.get(
+        `${BASE_URL}/open-api/od/v1/positions/`,
+        { headers: this.getHeaders(userSession) }
+      );
+
+      return res.data;
+
+    } catch (error) {
+
+      console.error(
+        "getPositions error:",
+        error.response?.data || error.message
+      );
+
+      throw new Error("Failed to fetch positions");
+
+    }
+  }
+
+}
+
+module.exports = new AliceBlueService();
