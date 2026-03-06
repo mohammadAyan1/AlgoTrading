@@ -40,6 +40,18 @@ async function getClientWithSession(clientId) {
   return rows[0];
 }
 
+
+function getBrokerOrderId(result) {
+  return (
+    result?.result?.[0]?.brokerOrderId ||
+    result?.result?.[0]?.orderNumber ||
+    result?.result?.[0]?.orderNo ||
+    result?.data?.[0]?.brokerOrderId ||
+    result?.data?.[0]?.orderNumber ||
+    null
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // REGULAR ORDERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,7 +77,7 @@ exports.placeOrder = async (req, res) => {
         order_type, product, quantity, price, status, order_source, response_data)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       [client.id,
-      result.result?.[0]?.orderNumber || result.data?.[0]?.orderNumber || null,
+      getBrokerOrderId(result),
       payload.tradingSymbol, payload.exchange, payload.transactionType,
       payload.orderType, payload.product, payload.quantity, payload.price || 0,
       result.status === 'Ok' ? 'SUCCESS' : 'FAILED',
@@ -110,9 +122,9 @@ exports.placeBulkOrder = async (req, res) => {
       await db.query(
         `INSERT INTO bulk_order_clients (bulk_order_id, client_id, alice_order_id, status, error_message)
          VALUES (?,?,?,?,?)`,
-        [grp.insertId, cid, result.result?.[0]?.orderNumber || null, status, result.message || null]
+        [grp.insertId, cid, getBrokerOrderId(result), status, result.message || null]
       ).catch(() => { });
-      return { clientId: cid, clientName: client.name, status, orderId: result.result?.[0]?.orderNumber, rawResult: result };
+      return { clientId: cid, clientName: client.name, status, orderId: getBrokerOrderId(result), rawResult: result };
     }));
 
     const data = results.map(r => r.status === 'fulfilled' ? r.value : { status: 'FAILED', error: r.reason?.message });
@@ -203,7 +215,7 @@ exports.placeGTTOrder = async (req, res) => {
       price: Number(data.price),
       orderComplexity: data.orderComplexity || 'REGULAR',
       instrumentId,
-      gttType: "LTP_A_O" || data.gttType,
+      gttType: data.gttType || (String(data.transactionType || '').toUpperCase() === 'BUY' ? 'LTP_B_O' : 'LTP_A_O'),
       gttValue: String(Number(data.gttValue)),
     };
 
@@ -222,7 +234,7 @@ exports.placeGTTOrder = async (req, res) => {
       payload.orderType, payload.product, payload.quantity,
       payload.gttValue, payload.price, instrumentId, payload.gttType,
       result.status === 'Ok' ? 'PLACED' : 'FAILED',
-      result.result?.[0]?.orderNo || null]
+      getBrokerOrderId(result)]
     ).catch(() => { });
 
     res.json({ success: true, data: result });
@@ -236,10 +248,10 @@ exports.placeGTTOrder = async (req, res) => {
 exports.modifyGTTOrder = async (req, res) => {
   try {
     const data = req.body;
-    if (!data.orderNumber) return res.status(400).json({ success: false, message: 'orderNumber required' });
+    if (!data.orderNumber && !data.brokerOrderId) return res.status(400).json({ success: false, message: 'orderNumber/brokerOrderId required' });
 
     const instrumentId = resolveInstrumentId(data.tradingSymbol, data.exchange, data.instrumentId);
-    const payload = instrumentId ? { ...data, instrumentId } : data;
+    const payload = { ...data, ...(instrumentId ? { instrumentId } : {}), brokerOrderId: data.brokerOrderId || data.orderNumber };
 
 
 
@@ -308,9 +320,9 @@ exports.placeBulkGTTOrder = async (req, res) => {
         [cid, payload.tradingSymbol, payload.exchange, payload.transactionType,
           payload.orderType, payload.product, payload.quantity,
           payload.gttValue, payload.price, instrumentId, payload.gttType,
-          status, result.result?.[0]?.orderNumber || null]
+          status, getBrokerOrderId(result)]
       ).catch(() => { });
-      return { clientId: cid, clientName: client.name, status, orderId: result.result?.[0]?.orderNumber };
+      return { clientId: cid, clientName: client.name, status, orderId: getBrokerOrderId(result) };
     }));
 
     const data = results.map(r => r.status === 'fulfilled' ? r.value : { status: 'FAILED', error: r.reason?.message });
@@ -349,3 +361,4 @@ exports.getOrdersLog = async (req, res) => {
     res.json({ success: true, data: rows });
   } catch (err) { res.status(400).json({ success: false, message: err.message }); }
 };
+

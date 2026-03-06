@@ -206,6 +206,17 @@ class AliceBlueService {
     };
   }
 
+  formatApiError(error, fallback = 'Request failed') {
+    const data = error?.response?.data;
+    const message =
+      data?.message ||
+      data?.error ||
+      data?.statusMessage ||
+      error?.message ||
+      fallback;
+    return typeof message === 'string' ? message : JSON.stringify(message);
+  }
+
   async getUserSession(checksum) {
     try {
 
@@ -278,6 +289,7 @@ class AliceBlueService {
   async placeOrder(userSession, orderData) {
 
     try {
+      // price: Number(orderData.price || 0),
 
       const payload = {
         tradingSymbol: orderData.tradingSymbol,
@@ -287,7 +299,7 @@ class AliceBlueService {
         product: orderData.product || 'INTRADAY',
         validity: orderData.validity || 'DAY',
         quantity: String(orderData.quantity),
-        price: Number(orderData.price || 0),
+        price: null,
         orderComplexity: orderData.orderComplexity || 'REGULAR',
         instrumentId: String(orderData.instrumentId)
       };
@@ -309,7 +321,7 @@ class AliceBlueService {
         error.response?.data || error.message
       );
 
-      throw new Error("Failed to place order");
+      throw new Error(this.formatApiError(error, "Failed to place order"));
 
     }
   }
@@ -332,7 +344,7 @@ class AliceBlueService {
         error.response?.data || error.message
       );
 
-      throw new Error("Failed to modify order");
+      throw new Error(this.formatApiError(error, "Failed to modify order"));
 
     }
   }
@@ -355,7 +367,7 @@ class AliceBlueService {
         error.response?.data || error.message
       );
 
-      throw new Error("Failed to cancel order");
+      throw new Error(this.formatApiError(error, "Failed to cancel order"));
 
     }
   }
@@ -390,7 +402,14 @@ class AliceBlueService {
         { headers: this.getHeaders(userSession) }
       );
 
+
+      console.log(res?.data);
+
+
       return res.data;
+
+
+
 
     } catch (error) {
 
@@ -424,13 +443,22 @@ class AliceBlueService {
         gttValue: String(gttData.gttValue)
       };
 
-      const res = await axios.post(
-        `${BASE_URL}/open-api/od/v1/orders/gtt/execute`,
-        payload,
-        { headers: this.getHeaders(userSession) }
-      );
-
-      return res.data;
+      try {
+        const res = await axios.post(
+          `${BASE_URL}/open-api/od/v1/orders/gtt/place`,
+          payload,
+          { headers: this.getHeaders(userSession) }
+        );
+        return res.data;
+      } catch (primaryError) {
+        // Backward compatibility: some Alice Blue environments still expose /gtt/execute.
+        const fallbackRes = await axios.post(
+          `${BASE_URL}/open-api/od/v1/orders/gtt/execute`,
+          payload,
+          { headers: this.getHeaders(userSession) }
+        );
+        return fallbackRes.data;
+      }
 
     } catch (error) {
 
@@ -439,7 +467,7 @@ class AliceBlueService {
         error.response?.data || error.message
       );
 
-      throw new Error("Failed to place GTT order");
+      throw new Error(this.formatApiError(error, "Failed to place GTT order"));
 
     }
   }
@@ -448,10 +476,18 @@ class AliceBlueService {
     try {
 
       const payloadData = {
-        ...gttData,
-        brokerOrderId: gttData?.orderNumber,
-        instrumentId: "14366",
-        gttType: "LTP_A_O"
+        tradingSymbol: gttData.tradingSymbol,
+        exchange: gttData.exchange,
+        orderType: gttData.orderType || 'LIMIT',
+        product: gttData.product || 'LONGTERM',
+        validity: gttData.validity || 'DAY',
+        quantity: String(gttData.quantity),
+        price: Number(gttData.price),
+        orderComplexity: gttData.orderComplexity || 'REGULAR',
+        instrumentId: String(gttData.instrumentId),
+        gttType: gttData.gttType,
+        gttValue: String(gttData.gttValue),
+        brokerOrderId: gttData.brokerOrderId || gttData.orderNumber
       };
 
       const res = await axios.post(
@@ -469,7 +505,7 @@ class AliceBlueService {
         error.response?.data || error.message
       );
 
-      throw new Error("Failed to modify GTT order");
+      throw new Error(this.formatApiError(error, "Failed to modify GTT order"));
 
     }
   }
@@ -492,7 +528,7 @@ class AliceBlueService {
         error.response?.data || error.message
       );
 
-      throw new Error("Failed to cancel GTT order");
+      throw new Error(this.formatApiError(error, "Failed to cancel GTT order"));
 
     }
   }
