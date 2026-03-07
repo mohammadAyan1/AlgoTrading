@@ -45,7 +45,7 @@ const pool = mysql.createPool({
   timezone: "+05:30",
 
   ssl: {
-    ca: fs.readFileSync(path.join(__dirname, "../ca (1).pem"))
+    ca: fs.readFileSync(path.join(__dirname, "ca.pem"))
   }
 });
 
