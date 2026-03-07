@@ -218,7 +218,7 @@ exports.createClient = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Failed to create client"
+      message: `Failed to create client ${error}`
     });
 
   }
