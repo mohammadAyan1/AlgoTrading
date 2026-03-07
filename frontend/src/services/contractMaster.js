@@ -13,40 +13,40 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-const BASE_URL   = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api') + '/market/contract-master';
-const EXCHANGES  = ['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BFO', 'BCD'];
-const CACHE_KEY  = 'ab_contract_master_v2';
-const CACHE_TTL  = 6 * 60 * 60 * 1000; // 6 hours
+const BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api') + '/market/contract-master';
+const EXCHANGES = ['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BFO', 'BCD'];
+const CACHE_KEY = 'ab_contract_master_v2';
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
 // In-memory maps (rebuilt on load)
 let allInstruments = [];
-let symbolMap      = new Map(); // "NSE:CIPLA-EQ" → instrument
-let tokenMap       = new Map(); // "NSE:14309"    → instrument
-let loadState      = 'idle';   // idle | loading | ready | error
-let loadPromise    = null;
+let symbolMap = new Map(); // "NSE:CIPLA-EQ" → instrument
+let tokenMap = new Map(); // "NSE:14309"    → instrument
+let loadState = 'idle';   // idle | loading | ready | error
+let loadPromise = null;
 
 // ── Normalize one row from Alice Blue contract master ──────────────────────
 function normalize(row, exchange) {
   const exch = (row.exch || exchange).toUpperCase();
   return {
-    exchange:    exch,
-    token:       String(row.token || ''),
-    symbol:      String(row.trading_symbol || row.symbol || ''),
-    name:        String(row.formatted_ins_name || row.symbol || row.trading_symbol || ''),
-    lotSize:     parseInt(row.lot_size || '1') || 1,
-    tickSize:    parseFloat(row.tick_size || '0.05') || 0.05,
-    instrument:  String(row.instrument_type || 'EQ'),
-    expiry:      row.expiry_date ? fmtExpiry(row.expiry_date) : '',
+    exchange: exch,
+    token: String(row.token || ''),
+    symbol: String(row.trading_symbol || row.symbol || ''),
+    name: String(row.formatted_ins_name || row.symbol || row.trading_symbol || ''),
+    lotSize: parseInt(row.lot_size || '1') || 1,
+    tickSize: parseFloat(row.tick_size || '0.05') || 0.05,
+    instrument: String(row.instrument_type || 'EQ'),
+    expiry: row.expiry_date ? fmtExpiry(row.expiry_date) : '',
     strikePrice: String(row.strike_price || ''),
-    optionType:  String(row.option_type  || ''),
-    segment:     String(row.exchange_segment || ''),
+    optionType: String(row.option_type || ''),
+    segment: String(row.exchange_segment || ''),
   };
 }
 
 function fmtExpiry(epochMs) {
   try {
     return new Date(parseInt(epochMs)).toLocaleDateString('en-IN',
-      { day:'2-digit', month:'short', year:'numeric' });
+      { day: '2-digit', month: 'short', year: 'numeric' });
   } catch { return ''; }
 }
 
@@ -56,7 +56,7 @@ function buildMaps(records) {
   tokenMap.clear();
   records.forEach(inst => {
     symbolMap.set(`${inst.exchange}:${inst.symbol}`, inst);
-    tokenMap.set(`${inst.exchange}:${inst.token}`,   inst);
+    tokenMap.set(`${inst.exchange}:${inst.token}`, inst);
     // Also index without -EQ suffix: "NSE:CIPLA" → same inst as "NSE:CIPLA-EQ"
     const bare = inst.symbol.replace(/-EQ$/i, '');
     if (bare !== inst.symbol) symbolMap.set(`${inst.exchange}:${bare}`, inst);
@@ -101,17 +101,17 @@ async function fetchExchange(exch) {
 
 // ── Main load function ─────────────────────────────────────────────────────
 export function load() {
-  if (loadState === 'ready')   return Promise.resolve(true);
+  if (loadState === 'ready') return Promise.resolve(true);
   if (loadState === 'loading') return loadPromise;
 
   // Try cache first
   if (tryRestoreCache()) return Promise.resolve(true);
 
-  loadState   = 'loading';
+  loadState = 'loading';
   loadPromise = (async () => {
     console.log('📥 Downloading contract master from Alice Blue…');
     const all = [];
-    let ok     = 0;
+    let ok = 0;
 
     for (const exch of EXCHANGES) {
       try {
@@ -141,7 +141,7 @@ export function load() {
 
 // ── Force reload (clear cache + re-download) ───────────────────────────────
 export async function reload() {
-  try { sessionStorage.removeItem(CACHE_KEY); } catch (e) {}
+  try { sessionStorage.removeItem(CACHE_KEY); } catch (e) { }
   loadState = 'idle';
   return load();
 }
@@ -151,8 +151,8 @@ export async function reload() {
 export function getBySymbol(exchange, symbol) {
   const exch = exchange.toUpperCase();
   return symbolMap.get(`${exch}:${symbol}`)
-      || symbolMap.get(`${exch}:${symbol}-EQ`)
-      || symbolMap.get(`${exch}:${symbol.replace(/-EQ$/i,'')}`);
+    || symbolMap.get(`${exch}:${symbol}-EQ`)
+    || symbolMap.get(`${exch}:${symbol.replace(/-EQ$/i, '')}`);
 }
 
 // ── Lookup by token ─────────────────────────────────────────────────────────
@@ -178,10 +178,10 @@ export function searchInstruments(query, exchange = null, limit = 25) {
 
 export function getStats() {
   const byExchange = {};
-  allInstruments.forEach(i => { byExchange[i.exchange] = (byExchange[i.exchange]||0)+1; });
+  allInstruments.forEach(i => { byExchange[i.exchange] = (byExchange[i.exchange] || 0) + 1; });
   return { total: allInstruments.length, byExchange, state: loadState };
 }
 
-export function isReady()   { return loadState === 'ready'; }
+export function isReady() { return loadState === 'ready'; }
 export function isLoading() { return loadState === 'loading'; }
-export function getAll()    { return allInstruments; }
+export function getAll() { return allInstruments; }

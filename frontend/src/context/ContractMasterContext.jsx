@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
-const BACKEND_API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const BACKEND_API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const EXCHANGES = ['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BCD', 'BFO'];
 const LS_KEY = 'contract_master_cache_v1';
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
