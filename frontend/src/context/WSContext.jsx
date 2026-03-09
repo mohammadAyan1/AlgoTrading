@@ -3,16 +3,17 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 const WSContext = createContext(null);
 
 export function WSProvider({ children }) {
-  const [prices,    setPrices]    = useState({});
+  const [prices, setPrices] = useState({});
   const [connected, setConnected] = useState(false);
   const [priceMode, setPriceMode] = useState('connecting'); // 'ab_live' | 'yahoo' | 'sim' | 'connecting'
-  const [source,    setSource]    = useState('Connecting…');
-  const wsRef        = useRef(null);
+  const [source, setSource] = useState('Connecting…');
+  const wsRef = useRef(null);
   const reconnectRef = useRef(null);
 
   const connect = useCallback(() => {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = window.location.hostname;
-    const url  = `ws://${host}:5000/ws`;
+    const url = `${protocol}://${host}/ws`;
     try {
       const ws = new WebSocket(url);
       wsRef.current = ws;
@@ -37,19 +38,19 @@ export function WSProvider({ children }) {
               [msg.symbol]: {
                 ...prev[msg.symbol],
                 ...msg.data,
-                symbol:      msg.symbol,
-                name:        msg.name     || prev[msg.symbol]?.name     || msg.symbol,
-                exchange:    msg.exchange || prev[msg.symbol]?.exchange || 'NSE',
-                token:       msg.token    || prev[msg.symbol]?.token    || '',
+                symbol: msg.symbol,
+                name: msg.name || prev[msg.symbol]?.name || msg.symbol,
+                exchange: msg.exchange || prev[msg.symbol]?.exchange || 'NSE',
+                token: msg.token || prev[msg.symbol]?.token || '',
                 isSimulated: msg.data?.isSimulated ?? prev[msg.symbol]?.isSimulated,
               }
             }));
           }
-        } catch (e) {}
+        } catch (e) { }
       };
 
-      ws.onclose  = () => { setConnected(false); reconnectRef.current = setTimeout(connect, 3000); };
-      ws.onerror  = () => ws.close();
+      ws.onclose = () => { setConnected(false); reconnectRef.current = setTimeout(connect, 3000); };
+      ws.onerror = () => ws.close();
     } catch (e) {
       reconnectRef.current = setTimeout(connect, 5000);
     }
@@ -57,10 +58,10 @@ export function WSProvider({ children }) {
 
   useEffect(() => {
     connect();
-    return () => { clearTimeout(reconnectRef.current); try { wsRef.current?.close(); } catch (e) {} };
+    return () => { clearTimeout(reconnectRef.current); try { wsRef.current?.close(); } catch (e) { } };
   }, [connect]);
 
-  const getPrice  = (symbol) => prices[symbol] || prices[symbol?.replace(/-EQ$/i,'')] || null;
+  const getPrice = (symbol) => prices[symbol] || prices[symbol?.replace(/-EQ$/i, '')] || null;
   const subscribe = (symbols) => {
     if (wsRef.current?.readyState === WebSocket.OPEN)
       wsRef.current.send(JSON.stringify({ type: 'SUBSCRIBE', symbols }));
