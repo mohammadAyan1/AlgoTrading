@@ -12,7 +12,9 @@ export function WSProvider({ children }) {
 
   const connect = useCallback(() => {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const host = window.location.hostname;
+    const host = window.location.protocol === "https:" ? "algotrading-backend-wfn4.onrender.com" : window.location.hostname + ":5000";
+
+    // const host = window.location.hostname;
     const url = `${protocol}://${host}/ws`;
     try {
       const ws = new WebSocket(url);
