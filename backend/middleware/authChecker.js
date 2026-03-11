@@ -5,6 +5,10 @@ exports.checkAuthMiddleware = async (req, res, next) => {
 
         const userCookie = req.cookies.user;
 
+        console.log('====================================');
+        console.log(userCookie, "Middleware console");
+        console.log('====================================');
+
         if (!userCookie) {
             return res.status(401).json({
                 success: false,
@@ -29,19 +33,24 @@ exports.checkAuthMiddleware = async (req, res, next) => {
 
         const client = rows[0];
 
-        if (!client.user_session) {
-            return res.status(401).json({
-                success: false,
-                message: "Session not active"
-            });
-        }
 
-        if (new Date(client.session_expires_at) < new Date()) {
-            return res.status(401).json({
-                success: false,
-                message: "Session expired"
-            });
-        }
+        console.log('====================================');
+        console.log(client, "This is the middleware cookie data");
+        console.log('====================================');
+
+        // if (!client.user_session) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: "Session not active"
+        //     });
+        // }
+
+        // if (new Date(client.session_expires_at) < new Date()) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: "Session expired"
+        //     });
+        // }
 
         // attach user to request
         req.user = {
