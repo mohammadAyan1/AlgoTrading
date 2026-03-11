@@ -125,6 +125,14 @@ exports.loginUser = async (req, res) => {
         //     sameSite: "lax"
         // });
 
+
+        //     res.cookie("token", token, {
+        //   httpOnly: true,
+        //   secure: true,          // ✅ REQUIRED on HTTPS
+        //   sameSite: "none",      // ✅ REQUIRED for cross-site
+        //   maxAge: 30 * 24 * 60 * 60 * 1000,
+        // });
+
         res.cookie("user", JSON.stringify(userData), {
             httpOnly: true,
             expires: expiresAt,
