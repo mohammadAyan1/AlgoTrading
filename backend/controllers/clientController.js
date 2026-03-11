@@ -358,36 +358,45 @@ exports.getClientLimits = async (req, res) => {
 exports.getSessionStatus = async (req, res) => {
   try {
 
-    console.log('====================================');
-    console.log(req?.user);
-    console.log('====================================');
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      });
+    }
 
-    let clients
+    console.log(req.user);
 
-    if (req?.user.role == "admin") {
+    let clients;
+
+    if (req.user.role === "admin") {
 
       [clients] = await db.query(`
-      SELECT id, name, user_id, is_active,
-      CASE 
-        WHEN user_session IS NOT NULL AND session_expires_at > NOW()
-        THEN 'active'
-        ELSE 'inactive'
-      END as session_status,
-      session_expires_at
-      FROM clients WHERE is_active = 1
-    `);
+        SELECT id, name, user_id, is_active,
+        CASE 
+          WHEN user_session IS NOT NULL AND session_expires_at > NOW()
+          THEN 'active'
+          ELSE 'inactive'
+        END as session_status,
+        session_expires_at
+        FROM clients WHERE is_active = 1
+      `);
+
     } else {
-      const userId = parseInt(req?.user?.id)
+
+      const userId = parseInt(req.user.id);
+
       [clients] = await db.query(`
-      SELECT id, name, user_id, is_active,
-      CASE 
-        WHEN user_session IS NOT NULL AND session_expires_at > NOW()
-        THEN 'active'
-        ELSE 'inactive'
-      END as session_status,
-      session_expires_at
-      FROM clients WHERE is_active = 1 AND id = ${userId}
-    `);
+        SELECT id, name, user_id, is_active,
+        CASE 
+          WHEN user_session IS NOT NULL AND session_expires_at > NOW()
+          THEN 'active'
+          ELSE 'inactive'
+        END as session_status,
+        session_expires_at
+        FROM clients WHERE is_active = 1 AND id = ?
+      `, [userId]);
+
     }
 
     res.json({
