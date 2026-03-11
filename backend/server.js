@@ -112,7 +112,7 @@ const server = http.createServer(app);
 app.use(cookieParser());
 try {
   app.use(cors({
-    origin: [process.env.FRONTEND_URL, 'http://localhost:3000', "https://algotrading-fv76.onrender.com", "https://mytrading.sfroadways.com/api"],
+    origin: [process.env.FRONTEND_URL, 'http://localhost:3000', "https://algotrading-fv76.onrender.com", "https://mytrading.sfroadways.com"],
     credentials: true
   }));
 

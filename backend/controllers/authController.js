@@ -3,7 +3,7 @@ const db = require("../config/db");
 exports.checkAuth = async (req, res) => {
     try {
 
-        const userCookie = req.cookies.user;
+        const userCookie = req?.cookies?.user;
 
         console.log('====================================');
         console.log(userCookie);
@@ -118,12 +118,12 @@ exports.loginUser = async (req, res) => {
             role: client.role
         };
 
-        // res.cookie("user", JSON.stringify(userData), {
-        //     httpOnly: true,
-        //     expires: expiresAt,
-        //     secure: false,
-        //     sameSite: "lax"
-        // });
+        res.cookie("user", JSON.stringify(userData), {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: expiresAt,
+        });
 
 
         //     res.cookie("token", token, {
@@ -133,12 +133,12 @@ exports.loginUser = async (req, res) => {
         //   maxAge: 30 * 24 * 60 * 60 * 1000,
         // });
 
-        res.cookie("user", JSON.stringify(userData), {
-            httpOnly: true,
-            expires: expiresAt,
-            secure: true,
-            sameSite: "none"
-        });
+        // res.cookie("user", JSON.stringify(userData), {
+        //     httpOnly: true,
+        //     expires: expiresAt,
+        //     secure: true,
+        //     sameSite: "none"
+        // });
 
         return res.json({
             success: true,
