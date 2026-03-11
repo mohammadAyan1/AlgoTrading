@@ -5,6 +5,10 @@ exports.checkAuth = async (req, res) => {
 
         const userCookie = req.cookies.user;
 
+        console.log('====================================');
+        console.log(userCookie);
+        console.log('====================================');
+
         if (!userCookie) {
             return res.status(401).json({
                 success: false,

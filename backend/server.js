@@ -107,6 +107,7 @@ const livePriceService = require('./services/websocketService');
 const scripMaster = require('./services/scripMasterService');
 
 const app = express();
+app.set("trust proxy", 1);
 const server = http.createServer(app);
 app.use(cookieParser());
 try {
