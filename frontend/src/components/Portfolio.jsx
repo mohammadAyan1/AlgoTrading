@@ -1,186 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import { clientAPI, orderAPI } from '../services/api';
-// import { useLivePrices } from '../context/WSContext';
-// import toast from 'react-hot-toast';
-// import { Briefcase, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
-
-// export default function Portfolio() {
-//   const [clients, setClients] = useState([]);
-//   const [selectedClient, setSelectedClient] = useState(null);
-//   const [tab, setTab] = useState('holdings');
-//   const [data, setData] = useState(null);
-//   const [loading, setLoading] = useState(false);
-//   const { getPrice } = useLivePrices();
-
-//   useEffect(() => {
-//     clientAPI.getSessions().then(res => {
-//       const active = res.data.data.filter(c => c.session_status === 'active');
-//       setClients(res.data.data);
-//       if (active.length > 0) setSelectedClient(active[0].id);
-//     });
-//   }, []);
-
-//   useEffect(() => {
-//     if (selectedClient) loadData();
-//   }, [selectedClient, tab]);
-
-//   const loadData = async () => {
-//     setLoading(true);
-//     setData(null);
-//     try {
-//       let res;
-//       if (tab === 'holdings') res = await orderAPI.getHoldings(selectedClient);
-//       else if (tab === 'positions') res = await orderAPI.getPositions(selectedClient);
-//       else if (tab === 'orders') res = await orderAPI.getOrderBook(selectedClient);
-//       else if (tab === 'trades') res = await orderAPI.getTrades(selectedClient);
-//       setData(res.data.data);
-//     } catch (e) {
-//       toast.error(e.response?.data?.message || 'Failed to load data');
-//     }
-//     setLoading(false);
-//   };
-
-//   const styles = {
-//     tab: (active) => ({
-//       padding: '8px 16px', border: 'none', borderRadius: 6, cursor: 'pointer',
-//       fontWeight: 600, fontSize: 13,
-//       background: active ? '#6366f1' : 'transparent',
-//       color: active ? 'white' : '#64748b'
-//     }),
-//     th: { color: '#64748b', fontSize: 11, fontWeight: 600, padding: '8px 12px', textAlign: 'left', textTransform: 'uppercase' },
-//     td: { color: '#e2e8f0', fontSize: 13, padding: '10px 12px', borderBottom: '1px solid #1e293b' }
-//   };
-
-//   const renderHoldings = (items) => {
-//     if (!items || items.length === 0) return <div style={{ color: '#64748b', padding: 20, textAlign: 'center' }}>No holdings found</div>;
-//     return (
-//       <div style={{ overflowX: 'auto' }}>
-//         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-//           <thead>
-//             <tr style={{ background: '#1e293b' }}>
-//               {['Symbol', 'Qty', 'Avg Price', 'LTP', 'P&L', 'P&L %'].map(h => (
-//                 <th key={h} style={styles.th}>{h}</th>
-//               ))}
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {items.map((h, i) => {
-//               const lp = getPrice(h.sym || h.tradingSymbol);
-//               const ltp = lp?.ltp || parseFloat(h.ltp) || 0;
-//               const avgPrice = parseFloat(h.price || h.avgPrice) || 0;
-//               const qty = parseInt(h.qty || h.holdQty) || 0;
-//               const pnl = (ltp - avgPrice) * qty;
-//               const pnlPct = avgPrice > 0 ? ((ltp - avgPrice) / avgPrice * 100) : 0;
-//               const isProfit = pnl >= 0;
-
-//               return (
-//                 <tr key={i} style={{ ':hover': { background: '#1e293b' } }}>
-//                   <td style={{ ...styles.td, fontWeight: 600 }}>{h.sym || h.tradingSymbol}</td>
-//                   <td style={styles.td}>{qty}</td>
-//                   <td style={styles.td}>₹{avgPrice.toFixed(2)}</td>
-//                   <td style={{ ...styles.td, fontFamily: 'monospace' }}>₹{ltp.toFixed(2)}</td>
-//                   <td style={{ ...styles.td, color: isProfit ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
-//                     {isProfit ? '+' : ''}₹{pnl.toFixed(2)}
-//                   </td>
-//                   <td style={{ ...styles.td, color: isProfit ? '#22c55e' : '#ef4444' }}>
-//                     {isProfit ? <TrendingUp size={12} style={{ display: 'inline', marginRight: 2 }} /> : <TrendingDown size={12} style={{ display: 'inline', marginRight: 2 }} />}
-//                     {isProfit ? '+' : ''}{pnlPct.toFixed(2)}%
-//                   </td>
-//                 </tr>
-//               );
-//             })}
-//           </tbody>
-//         </table>
-//       </div>
-//     );
-//   };
-
-//   const renderGenericTable = (items, keys) => {
-//     if (!items || items.length === 0) return <div style={{ color: '#64748b', padding: 20, textAlign: 'center' }}>No data found</div>;
-//     const headers = keys || Object.keys(items[0] || {}).slice(0, 8);
-//     return (
-//       <div style={{ overflowX: 'auto' }}>
-//         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-//           <thead>
-//             <tr style={{ background: '#1e293b' }}>
-//               {headers.map(h => <th key={h} style={styles.th}>{h}</th>)}
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {items.map((row, i) => (
-//               <tr key={i}>
-//                 {headers.map(h => (
-//                   <td key={h} style={styles.td}>{String(row[h] ?? '-')}</td>
-//                 ))}
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-//     );
-//   };
-
-//   return (
-//     <div style={{ padding: 20 }}>
-//       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-//         <h2 style={{ color: '#e2e8f0', margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-//           <Briefcase size={20} color="#6366f1" /> Portfolio
-//         </h2>
-//         <div style={{ display: 'flex', gap: 8 }}>
-//           <select
-//             value={selectedClient || ''}
-//             onChange={e => setSelectedClient(e.target.value)}
-//             style={{
-//               background: '#1e293b', border: '1px solid #334155', borderRadius: 6,
-//               padding: '7px 12px', color: '#e2e8f0', fontSize: 13
-//             }}>
-//             <option value="">Select Client</option>
-//             {clients.filter(c => c.session_status === 'active').map(c => (
-//               <option key={c.id} value={c.id}>{c.name}</option>
-//             ))}
-//           </select>
-//           <button onClick={loadData} style={{
-//             background: '#1e293b', border: '1px solid #334155', borderRadius: 6,
-//             color: '#94a3b8', padding: '7px 12px', cursor: 'pointer',
-//             display: 'flex', alignItems: 'center', gap: 6, fontSize: 13
-//           }}>
-//             <RefreshCw size={13} />
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Tabs */}
-//       <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#1e293b', borderRadius: 8, padding: 4 }}>
-//         {['holdings', 'positions', 'orders', 'trades'].map(t => (
-//           <button key={t} onClick={() => setTab(t)} style={styles.tab(tab === t)}>
-//             {t.charAt(0).toUpperCase() + t.slice(1)}
-//           </button>
-//         ))}
-//       </div>
-
-//       {/* Content */}
-//       <div style={{ background: '#0f172a', borderRadius: 8, border: '1px solid #1e293b', overflow: 'hidden' }}>
-//         {loading ? (
-//           <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Loading...</div>
-//         ) : !selectedClient ? (
-//           <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
-//             Select a client to view their portfolio
-//           </div>
-//         ) : !data ? (
-//           <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No data available</div>
-//         ) : (
-//           tab === 'holdings' ? renderHoldings(Array.isArray(data) ? data : data?.holdings || []) :
-//           tab === 'positions' ? renderGenericTable(Array.isArray(data) ? data : data?.positions || [],
-//             ['tradingSymbol', 'exchange', 'netQty', 'avgPrice', 'ltp', 'pnl', 'product']) :
-//           tab === 'orders' ? renderGenericTable(Array.isArray(data) ? data : data?.orders || [],
-//             ['tradingSymbol', 'exchange', 'transactionType', 'orderType', 'qty', 'price', 'status', 'orderTime']) :
-//           renderGenericTable(Array.isArray(data) ? data : data?.trades || [])
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
 
 import React, { useState, useEffect, useRef } from 'react';
 import { clientAPI, orderAPI } from '../services/api';
@@ -189,7 +6,7 @@ import { useContractMaster } from '../context/ContractMasterContext';
 import toast from 'react-hot-toast';
 import { Briefcase, TrendingUp, TrendingDown, RefreshCw, ShoppingCart, Users, CheckSquare, Square } from 'lucide-react';
 
-export default function Portfolio() {
+export default function Portfolio({ isAdmin }) {
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
   const [tab, setTab] = useState('holdings');
@@ -854,107 +671,111 @@ export default function Portfolio() {
         ))}
       </div>
 
-      <div className="sell-card">
-        <div className="sell-head">
-          <ShoppingCart size={14} color="#ef4444" />
-          One-Click Multi-Client Sell
-        </div>
-        <div className="sell-grid">
-          <div className="sell-symbol-wrap" ref={sellBoxRef}>
-            <input
-              className="sell-input"
-              placeholder="Symbol (IDEA / IDEA-EQ)"
-              value={bulkSell.tradingSymbol}
-              onFocus={() => {
-                setShowSellSuggestions(true);
-                loadSellSuggestions();
-              }}
-              onClick={() => {
-                setShowSellSuggestions(true);
-                loadSellSuggestions();
-              }}
-              onChange={e => {
-                setBulkSell(s => ({
-                  ...s,
-                  tradingSymbol: e.target.value.toUpperCase(),
-                  instrumentId: '',
-                }));
-                setShowSellSuggestions(true);
-              }}
-            />
-            {showSellSuggestions && (
-              <div className="sell-suggestions">
-                {filteredSuggestions.length === 0 ? (
-                  <div className="sell-empty">No bought stocks found</div>
-                ) : filteredSuggestions.map((item) => (
-                  <button
-                    key={`${item.exchange}-${item.tradingSymbol}`}
-                    className="sell-suggestion-item"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      applySuggestion(item);
-                    }}
-                  >
-                    <span>{item.tradingSymbol}</span>
-                    <span>{item.exchange} | Qty {item.quantity}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <select
-            className="sell-input"
-            value={bulkSell.exchange}
-            onChange={e => setBulkSell(s => ({ ...s, exchange: e.target.value, instrumentId: '' }))}
-          >
-            {['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BCD', 'BFO'].map(ex => <option key={ex}>{ex}</option>)}
-          </select>
-          <input
-            className="sell-input"
-            type="number"
-            min="1"
-            value={bulkSell.quantity}
-            onChange={e => setBulkSell(s => ({ ...s, quantity: parseInt(e.target.value, 10) || 1 }))}
-          />
-          <select
-            className="sell-input"
-            value={bulkSell.product}
-            onChange={e => setBulkSell(s => ({ ...s, product: e.target.value }))}
-          >
-            <option value="INTRADAY">INTRADAY</option>
-            <option value="LONGTERM">LONGTERM</option>
-            <option value="MTF">MTF</option>
-          </select>
-        </div>
-        <div className="sell-clients">
-          {activeClients.map(c => {
-            const checked = selectedSellClients.includes(c.id);
-            return (
-              <div
-                key={c.id}
-                className={`sell-client ${checked ? 'active' : ''}`}
-                onClick={() => toggleSellClient(c.id)}
-              >
-                {checked ? <CheckSquare size={13} color="#3b82f6" /> : <Square size={13} color="#64748b" />}
-                {c.name}
-              </div>
-            );
-          })}
-        </div>
-        <div className="sell-actions">
-          <button className="refresh-btn" onClick={selectAllSellClients}>
-            <Users size={13} /> All Active
-          </button>
-          <button
-            className="sell-btn"
-            onClick={handleBulkSell}
-            disabled={sellLoading || !selectedSellClients.length || !bulkSell.tradingSymbol}
-          >
-            {sellLoading ? 'Placing SELL...' : `SELL for ${selectedSellClients.length} client(s)`}
-          </button>
-        </div>
-      </div>
+      {
 
+        isAdmin && (
+          <div className="sell-card">
+            <div className="sell-head">
+              <ShoppingCart size={14} color="#ef4444" />
+              One-Click Multi-Client Sell
+            </div>
+            <div className="sell-grid">
+              <div className="sell-symbol-wrap" ref={sellBoxRef}>
+                <input
+                  className="sell-input"
+                  placeholder="Symbol (IDEA / IDEA-EQ)"
+                  value={bulkSell.tradingSymbol}
+                  onFocus={() => {
+                    setShowSellSuggestions(true);
+                    loadSellSuggestions();
+                  }}
+                  onClick={() => {
+                    setShowSellSuggestions(true);
+                    loadSellSuggestions();
+                  }}
+                  onChange={e => {
+                    setBulkSell(s => ({
+                      ...s,
+                      tradingSymbol: e.target.value.toUpperCase(),
+                      instrumentId: '',
+                    }));
+                    setShowSellSuggestions(true);
+                  }}
+                />
+                {showSellSuggestions && (
+                  <div className="sell-suggestions">
+                    {filteredSuggestions.length === 0 ? (
+                      <div className="sell-empty">No bought stocks found</div>
+                    ) : filteredSuggestions.map((item) => (
+                      <button
+                        key={`${item.exchange}-${item.tradingSymbol}`}
+                        className="sell-suggestion-item"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          applySuggestion(item);
+                        }}
+                      >
+                        <span>{item.tradingSymbol}</span>
+                        <span>{item.exchange} | Qty {item.quantity}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <select
+                className="sell-input"
+                value={bulkSell.exchange}
+                onChange={e => setBulkSell(s => ({ ...s, exchange: e.target.value, instrumentId: '' }))}
+              >
+                {['NSE', 'BSE', 'NFO', 'MCX', 'CDS', 'BCD', 'BFO'].map(ex => <option key={ex}>{ex}</option>)}
+              </select>
+              <input
+                className="sell-input"
+                type="number"
+                min="1"
+                value={bulkSell.quantity}
+                onChange={e => setBulkSell(s => ({ ...s, quantity: parseInt(e.target.value, 10) || 1 }))}
+              />
+              <select
+                className="sell-input"
+                value={bulkSell.product}
+                onChange={e => setBulkSell(s => ({ ...s, product: e.target.value }))}
+              >
+                <option value="INTRADAY">INTRADAY</option>
+                <option value="LONGTERM">LONGTERM</option>
+                <option value="MTF">MTF</option>
+              </select>
+            </div>
+            <div className="sell-clients">
+              {activeClients.map(c => {
+                const checked = selectedSellClients.includes(c.id);
+                return (
+                  <div
+                    key={c.id}
+                    className={`sell-client ${checked ? 'active' : ''}`}
+                    onClick={() => toggleSellClient(c.id)}
+                  >
+                    {checked ? <CheckSquare size={13} color="#3b82f6" /> : <Square size={13} color="#64748b" />}
+                    {c.name}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="sell-actions">
+              <button className="refresh-btn" onClick={selectAllSellClients}>
+                <Users size={13} /> All Active
+              </button>
+              <button
+                className="sell-btn"
+                onClick={handleBulkSell}
+                disabled={sellLoading || !selectedSellClients.length || !bulkSell.tradingSymbol}
+              >
+                {sellLoading ? 'Placing SELL...' : `SELL for ${selectedSellClients.length} client(s)`}
+              </button>
+            </div>
+          </div>
+        )
+      }
       {/* Content */}
       <div className="content-card">
         {loading ? (

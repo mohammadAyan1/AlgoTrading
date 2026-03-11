@@ -3,17 +3,23 @@ const router = express.Router();
 const clientController = require('../controllers/clientController');
 const orderController = require('../controllers/orderController');
 const marketController = require('../controllers/marketController');
+const authController = require("../controllers/authController")
 
-
-
+const { checkAuthMiddleware } = require("../middleware/authChecker")
 
 
 const marketRoutes = require("./marketRoutes");
 
+
+// -- Auth --------------------
+
+router.get("/auth", authController.checkAuth)
+router.post("/login-user", authController.loginUser)
+
 router.use("/market", marketRoutes);
 // ── CLIENTS ────────────────────────────────────────────────────────────────
 router.get('/clients', clientController.getAllClients);
-router.get('/clients/sessions', clientController.getSessionStatus);
+router.get('/clients/sessions', checkAuthMiddleware, clientController.getSessionStatus);
 router.get('/clients/:id', clientController.getClient);
 router.post('/clients', clientController.createClient);
 router.put('/clients/:id', clientController.updateClient);

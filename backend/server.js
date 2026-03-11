@@ -96,6 +96,9 @@ const cors = require('cors');
 const http = require('http');
 const WebSocket = require('ws');
 require('dotenv').config();
+const cookieParser = require("cookie-parser");
+
+
 
 const { loadContracts } = require("./controllers/contractMaster");
 
@@ -105,7 +108,7 @@ const scripMaster = require('./services/scripMasterService');
 
 const app = express();
 const server = http.createServer(app);
-
+app.use(cookieParser());
 try {
   app.use(cors({
     origin: [process.env.FRONTEND_URL, 'http://localhost:3000', "https://algotrading-fv76.onrender.com"],

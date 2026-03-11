@@ -1,247 +1,12 @@
-// import React, { useState, useEffect } from 'react';
-// import { clientAPI } from '../services/api';
-// import toast from 'react-hot-toast';
-// import { Plus, Trash2, RefreshCw, Link, Check, X, User, Shield } from 'lucide-react';
-
-// const styles = {
-//   card: { background: '#1e293b', borderRadius: 8, padding: 16, marginBottom: 12, border: '1px solid #334155' },
-//   input: {
-//     background: '#0f172a', border: '1px solid #334155', borderRadius: 6,
-//     padding: '8px 12px', color: '#e2e8f0', fontSize: 13, width: '100%', boxSizing: 'border-box',
-//     outline: 'none'
-//   },
-//   btn: (color = '#6366f1') => ({
-//     background: color, color: 'white', border: 'none', borderRadius: 6,
-//     padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-//     display: 'flex', alignItems: 'center', gap: 6
-//   }),
-//   label: { color: '#94a3b8', fontSize: 12, marginBottom: 4, display: 'block' },
-//   grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }
-// };
-
-// function SessionBadge({ status }) {
-//   const isActive = status === 'active';
-//   return (
-//     <span style={{
-//       padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-//       background: isActive ? '#14532d' : '#450a0a',
-//       color: isActive ? '#22c55e' : '#ef4444'
-//     }}>
-//       {isActive ? '● Active' : '○ Inactive'}
-//     </span>
-//   );
-// }
-
-// export default function ClientManager() {
-//   const [clients, setClients] = useState([]);
-//   const [showForm, setShowForm] = useState(false);
-//   const [authModal, setAuthModal] = useState(null);
-//   const [authCode, setAuthCode] = useState('');
-//   const [form, setForm] = useState({ name: '', user_id: '', app_code: '', api_secret: '' });
-//   const [loading, setLoading] = useState(false);
-
-//   const loadClients = async () => {
-//     try {
-//       const res = await clientAPI.getSessions();
-//       setClients(res.data.data);
-//     } catch (e) {
-//       toast.error('Failed to load clients');
-//     }
-//   };
-
-//   useEffect(() => { loadClients(); }, []);
-
-//   const handleSubmit = async () => {
-//     if (!form.name || !form.user_id || !form.app_code || !form.api_secret) {
-//       toast.error('All fields are required');
-//       return;
-//     }
-//     setLoading(true);
-//     try {
-//       await clientAPI.create(form);
-//       toast.success('Client added!');
-//       setForm({ name: '', user_id: '', app_code: '', api_secret: '' });
-//       setShowForm(false);
-//       loadClients();
-//     } catch (e) {
-//       toast.error(e.response?.data?.message || 'Failed to add client');
-//     }
-//     setLoading(false);
-//   };
-
-//   const handleDelete = async (id, name) => {
-//     if (!window.confirm(`Delete client "${name}"?`)) return;
-//     try {
-//       await clientAPI.delete(id);
-//       toast.success('Client deleted');
-//       loadClients();
-//     } catch (e) { toast.error('Failed to delete'); }
-//   };
-
-//   const handleGetLoginUrl = async (id, name) => {
-//     try {
-//       const res = await clientAPI.getLoginUrl(id);
-//       const url = res.data.data.loginUrl;
-//       window.open(url, '_blank');
-//       setAuthModal({ id, name });
-//     } catch (e) { toast.error('Failed to get login URL'); }
-//   };
-
-//   const handleActivateSession = async () => {
-//     if (!authCode.trim()) { toast.error('Enter auth code'); return; }
-//     try {
-//       await clientAPI.activateSession(authModal.id, authCode.trim());
-//       toast.success(`Session activated for ${authModal.name}!`);
-//       setAuthModal(null);
-//       setAuthCode('');
-//       loadClients();
-//     } catch (e) {
-//       toast.error(e.response?.data?.message || 'Failed to activate session');
-//     }
-//   };
-
-//   return (
-//     <div style={{ padding: 20 }}>
-//       {/* Header */}
-//       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-//         <div>
-//           <h2 style={{ color: '#e2e8f0', margin: 0, fontSize: 20, fontWeight: 700 }}>Client Manager</h2>
-//           <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 13 }}>
-//             Manage multiple Alice Blue trading accounts
-//           </p>
-//         </div>
-//         <div style={{ display: 'flex', gap: 8 }}>
-//           <button onClick={loadClients} style={styles.btn('#334155')}>
-//             <RefreshCw size={14} /> Refresh
-//           </button>
-//           <button onClick={() => setShowForm(!showForm)} style={styles.btn()}>
-//             <Plus size={14} /> Add Client
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Add Client Form */}
-//       {showForm && (
-//         <div style={{ ...styles.card, borderColor: '#6366f1', marginBottom: 20 }}>
-//           <h3 style={{ color: '#e2e8f0', margin: '0 0 16px', fontSize: 15 }}>New Client</h3>
-//           <div style={styles.grid}>
-//             {[
-//               ['Client Name', 'name', 'text', 'e.g. Rahul Sharma'],
-//               ['User ID (Alice Blue ID)', 'user_id', 'text', 'e.g. AB12345'],
-//               ['App Code', 'app_code', 'text', 'From Alice Blue developer portal'],
-//               ['API Secret', 'api_secret', 'password', 'Keep this confidential']
-//             ].map(([label, key, type, placeholder]) => (
-//               <div key={key}>
-//                 <label style={styles.label}>{label}</label>
-//                 <input
-//                   style={styles.input} type={type} placeholder={placeholder}
-//                   value={form[key]}
-//                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-//                 />
-//               </div>
-//             ))}
-//           </div>
-//           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-//             <button onClick={handleSubmit} disabled={loading} style={styles.btn('#22c55e')}>
-//               <Check size={14} /> {loading ? 'Saving...' : 'Save Client'}
-//             </button>
-//             <button onClick={() => setShowForm(false)} style={styles.btn('#ef4444')}>
-//               <X size={14} /> Cancel
-//             </button>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Clients List */}
-//       {clients.length === 0 ? (
-//         <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
-//           <User size={40} color="#334155" style={{ marginBottom: 12 }} />
-//           <p>No clients added yet. Add your first client above.</p>
-//         </div>
-//       ) : (
-//         <div>
-//           {clients.map(client => (
-//             <div key={client.id} style={styles.card}>
-//               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-//                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-//                   <div style={{
-//                     width: 40, height: 40, borderRadius: '50%',
-//                     background: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center'
-//                   }}>
-//                     <User size={18} color="#94a3b8" />
-//                   </div>
-//                   <div>
-//                     <div style={{ color: '#e2e8f0', fontWeight: 600 }}>{client.name}</div>
-//                     <div style={{ color: '#64748b', fontSize: 12 }}>ID: {client.user_id}</div>
-//                     {client.session_expires_at && (
-//                       <div style={{ color: '#64748b', fontSize: 11 }}>
-//                         Expires: {new Date(client.session_expires_at).toLocaleString()}
-//                       </div>
-//                     )}
-//                   </div>
-//                 </div>
-//                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-//                   <SessionBadge status={client.session_status} />
-//                   <button
-//                     onClick={() => handleGetLoginUrl(client.id, client.name)}
-//                     style={styles.btn('#0ea5e9')}
-//                     title="Login to Alice Blue & get auth code"
-//                   >
-//                     <Link size={12} /> Login
-//                   </button>
-//                   <button onClick={() => handleDelete(client.id, client.name)} style={styles.btn('#ef4444')}>
-//                     <Trash2 size={12} />
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-
-//       {/* Auth Code Modal */}
-//       {authModal && (
-//         <div style={{
-//           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
-//           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-//         }}>
-//           <div style={{
-//             background: '#1e293b', borderRadius: 12, padding: 28, width: 420,
-//             border: '1px solid #334155'
-//           }}>
-//             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-//               <Shield size={20} color="#6366f1" />
-//               <h3 style={{ color: '#e2e8f0', margin: 0 }}>Activate Session - {authModal.name}</h3>
-//             </div>
-//             <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>
-//               After logging in through the Alice Blue page that opened, copy the <strong style={{ color: '#6366f1' }}>authCode</strong> from the redirect URL and paste it below.
-//             </p>
-//             <label style={styles.label}>Auth Code (from redirect URL)</label>
-//             <input
-//               style={styles.input} type="text" placeholder="Paste authCode here..."
-//               value={authCode} onChange={e => setAuthCode(e.target.value)}
-//             />
-//             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-//               <button onClick={handleActivateSession} style={styles.btn('#22c55e')}>
-//                 <Check size={14} /> Activate
-//               </button>
-//               <button onClick={() => { setAuthModal(null); setAuthCode(''); }} style={styles.btn('#ef4444')}>
-//                 <X size={14} /> Cancel
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
 
 
 import React, { useState, useEffect } from 'react';
 import { clientAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, RefreshCw, Link, Check, X, User, Shield } from 'lucide-react';
-
+import { useNavigate } from 'react-router-dom';
+// import { useContext } from "react"
+// import { UserContext } from "../context/AuthContext";
 // Base styles (will be supplemented by responsive CSS)
 const styles = {
   card: { background: '#1e293b', borderRadius: 8, padding: 16, marginBottom: 12, border: '1px solid #334155' },
@@ -272,18 +37,36 @@ function SessionBadge({ status }) {
   );
 }
 
-export default function ClientManager() {
+export default function ClientManager({ authCodeFromPath, isAdmin }) {
+
+  // const { authModal, setAuthModal } = useContext(UserContext);
+
+  const navigate = useNavigate()
+
   const [clients, setClients] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [authModal, setAuthModal] = useState(null);
   const [authCode, setAuthCode] = useState('');
-  const [form, setForm] = useState({ name: '', user_id: '', app_code: '', api_secret: '' });
+  const [form, setForm] = useState({ name: '', user_id: '', app_code: '', api_secret: '', client_password: '' });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setAuthCode(authCodeFromPath)
+    const user = JSON.parse(localStorage.getItem("modelIdName"))
+    console.log(user)
+    setAuthModal(user)
+  }, [authCodeFromPath])
 
   const loadClients = async () => {
     try {
       const res = await clientAPI.getSessions();
+
+      console.log(res);
+
+      console.log(res?.data?.data);
+
       setClients(res.data.data);
+
     } catch (e) {
       toast.error('Failed to load clients');
     }
@@ -292,7 +75,7 @@ export default function ClientManager() {
   useEffect(() => { loadClients(); }, []);
 
   const handleSubmit = async () => {
-    if (!form.name || !form.user_id || !form.app_code || !form.api_secret) {
+    if (!form.name || !form.user_id || !form.app_code || !form.api_secret || !form?.client_password) {
       toast.error('All fields are required');
       return;
     }
@@ -300,7 +83,7 @@ export default function ClientManager() {
     try {
       await clientAPI.create(form);
       toast.success('Client added!');
-      setForm({ name: '', user_id: '', app_code: '', api_secret: '' });
+      setForm({ name: '', user_id: '', app_code: '', api_secret: '', client_password: '' });
       setShowForm(false);
       loadClients();
     } catch (e) {
@@ -324,7 +107,18 @@ export default function ClientManager() {
       const url = res.data.data.loginUrl;
       window.open(url, '_blank');
       setAuthModal({ id, name });
-    } catch (e) { toast.error('Failed to get login URL'); }
+      console.log(id);
+      console.log(name)
+      const userData = {
+        id,
+        name
+      }
+      localStorage.setItem("modelIdName", JSON.stringify(userData))
+    } catch (e) {
+      toast.error('Failed to get login URL');
+      console.log(e);
+
+    }
   };
 
   const handleActivateSession = async () => {
@@ -335,6 +129,9 @@ export default function ClientManager() {
       setAuthModal(null);
       setAuthCode('');
       loadClients();
+      localStorage.removeItem("modelIdName")
+      // navigate("/", { state: { showModal: true } });
+      navigate("/")
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to activate session');
     }
@@ -556,7 +353,8 @@ export default function ClientManager() {
               ['Client Name', 'name', 'text', 'e.g. Rahul Sharma'],
               ['User ID (Alice Blue ID)', 'user_id', 'text', 'e.g. AB12345'],
               ['App Code', 'app_code', 'text', 'From Alice Blue developer portal'],
-              ['API Secret', 'api_secret', 'password', 'Keep this confidential']
+              ['API Secret', 'api_secret', 'password', 'Keep this confidential'],
+              ['Client Password', 'client_password', 'password', 'Client Login Password']
             ].map(([label, key, type, placeholder]) => (
               <div key={key}>
                 <label style={styles.label}>{label}</label>
@@ -572,7 +370,7 @@ export default function ClientManager() {
             <button onClick={handleSubmit} disabled={loading} style={styles.btn('#22c55e')}>
               <Check size={14} /> {loading ? 'Saving...' : 'Save Client'}
             </button>
-            <button onClick={() => setShowForm(false)} style={styles.btn('#ef4444')}>
+            <button onClick={() => { setShowForm(false), localStorage.removeItem("modelIdName") }} style={styles.btn('#ef4444')}>
               <X size={14} /> Cancel
             </button>
           </div>
