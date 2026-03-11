@@ -33,19 +33,21 @@ exports.checkAuth = async (req, res) => {
 
         const client = rows[0];
 
-        if (!client.user_session) {
-            return res.status(401).json({
-                success: false,
-                message: "Session not active"
-            });
-        }
+        // if (!client.user_session) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: "Session not active"
+        //     });
+        // }
 
-        if (new Date(client.session_expires_at) < new Date()) {
-            return res.status(401).json({
-                success: false,
-                message: "Session expired"
-            });
-        }
+        // if (new Date(client.session_expires_at) < new Date()) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: "Session expired"
+        //     });
+        // }
+
+
 
         return res.json({
             success: true,
@@ -56,11 +58,11 @@ exports.checkAuth = async (req, res) => {
             }
         });
 
-        req.user = {
-            id: client.id,
-            name: client.name,
-            role: client?.role
-        }
+        // req.user = {
+        //     id: client.id,
+        //     name: client.name,
+        //     role: client?.role
+        // }
 
     } catch (error) {
 
