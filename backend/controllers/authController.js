@@ -138,8 +138,8 @@ exports.loginUser = async (req, res) => {
         res.cookie("user", JSON.stringify(userData), {
             httpOnly: true,
             expires: expiresAt,
-            secure: true,
-            sameSite: "none"
+            secure: false, // true
+            sameSite: "lax" //none
         });
 
         return res.json({

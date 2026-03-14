@@ -1,21 +1,3 @@
-// const express = require("express");
-// const router = express.Router();
-
-// const { search } = require("../controllers/contractMaster");
-
-// router.get("/search", (req, res) => {
-//     const q = req.query.q;
-
-//     if (!q) {
-//         return res.json([]);
-//     }
-
-//     const result = search(q);
-
-//     res.json(result);
-// });
-
-// module.exports = router;
 
 
 const express = require("express");

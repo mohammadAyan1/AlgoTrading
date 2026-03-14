@@ -338,9 +338,12 @@ export default function ClientManager({ authCodeFromPath, isAdmin }) {
           <button onClick={loadClients} style={styles.btn('#334155')}>
             <RefreshCw size={14} /> Refresh
           </button>
-          <button onClick={() => setShowForm(!showForm)} style={styles.btn()}>
-            <Plus size={14} /> Add Client
-          </button>
+          {isAdmin && (
+            <button onClick={() => setShowForm(!showForm)} style={styles.btn()}>
+              <Plus size={14} /> Add Client
+            </button>
+          )
+          }
         </div>
       </div>
 

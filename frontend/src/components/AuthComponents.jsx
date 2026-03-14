@@ -14,8 +14,6 @@ import {
   BarChart2, Users, Target, Briefcase, Settings,
   TrendingUp, Activity, Menu, X
 } from 'lucide-react';
-import { UserContext } from '../context/AuthContext';
-import { useContext } from 'react';
 import { useSearchParams, useLocation } from "react-router-dom";
 import ProtectedComponents from './ProtectedComponents';
 import api from '../services/api';
